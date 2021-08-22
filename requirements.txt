@@ -1,0 +1,3 @@
+wget
+pyrebase
+simple_term_menu

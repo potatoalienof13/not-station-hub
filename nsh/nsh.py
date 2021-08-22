@@ -1,31 +1,40 @@
-import simple_term_menu
-import pyrebase
+from simple_term_menu import TerminalMenu
+#import pyrebase
 import os
 from pathlib import Path
+from .server import ServerHub
 
 
-def create_firebase():
-    config = {
-        "apiKey": "AIzaSyB7GorzPgwHYjSV4XaJoszj98tLM4_WZpE",
-        "authDomain": "api.unitystation.org",
-    }
-    return pyrebase.initialize_app(config)
-files_path_var = os.getenv("NSH_FILES_DIR")
-if(files_path_var is not None):
-    files_directory = Path(files_path_var)
-else:
-    files_directory = Path(os.getenv("HOME") + "/.local/nsh")
+class Nsh:
+    install_dir: Path
+    config_dir: Path
 
-if(not files_directory.exists()):
-    os.mkdir(files_directory)
+    def __init__(self):
+        # firebase_config = {  # todo, fill this out with stuff that actually works
+        #    "apiKey": "apiKey",
+        #    "authDomain": "projectId.firebaseapp.com",
+        #    "databaseURL": "https://databaseName.firebaseio.com",
+        #    "storageBucket": "projectId.appspot.com"
+        # }
+        # self.firebase = pyrbase.initialize_app(firebase_config)
+        self.config_dir = self.get_path_from_env_or_default(
+            "XDG_CONFIG_HOME", Path.home() / ".config", "nsh")
+        self.install_dir = self.get_path_from_env_or_default(
+            "NSH_INSTALL_DIR", Path.home() / ".local" / "nsh", "")
 
-fb = create_firebase()
+    def get_path_from_env_or_default(self, env_var_name: str, backup_path: Path, suffix: Path):
+        if env_var := os.getenv(env_var_name):
+            return_path = Path(env_var) / suffix
+        else:
+            return_path = backup_path / suffix
+        if not return_path.exists():
+            return_path.mkdir()
+        return return_path
 
+    def run(self):
+        hub = ServerHub(
+            "https://api.unitystation.org/serverlist", self.install_dir)
 
-
-menu = simple_term_menu.TerminalMenu(options)
-choice = menu.show()
-print(choice)
-print(input("login"))
-
-
+        menu = TerminalMenu([x.name for x in hub.servers])
+        index = menu.show()
+        hub.servers[index].run("", "")
