@@ -39,10 +39,11 @@ class Server:
         self.download_linux = info["LinuxDownload"]
 
     def install_build(self):
-
         if not self.install_location.exists():
+            print("creating install directory")
             self.install_location.mkdir(parents=True)
         downloaded_path = self.install_location / 'install.zip'
+        if downloaded_path.exists(): downloaded_path.unlink()
         wget.download(self.download_linux, out=str(downloaded_path))
         with ZipFile(downloaded_path, 'r') as zip_us:
             print("attempting to extract")
